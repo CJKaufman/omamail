@@ -1,6 +1,6 @@
 {
   "apiVersion": 2,
-  "releasedApiVersion": 1,
+  "releasedApiVersion": 2,
   "protocolVersion": 1,
   "methods": [
     "system.info",
@@ -369,8 +369,6 @@
   ],
   "unreleased": {
     "methods": [],
-    "cases": [
-      "event look projection"
-    ]
+    "cases": []
   }
 }
