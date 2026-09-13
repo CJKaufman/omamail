@@ -56,10 +56,8 @@ Item {
   Connections {
     target: root.service
     function onSuggestEventsChanged() { root.unavailable = false; root.consider() }
-    // The look is the unreleased step of the API: the pinned backend has no
-    // `events` job and no `eventLooks`. Nothing is read or asked until the
-    // backend the owner has is one that can answer.
-    function onBackendNeedsUpdateChanged() { root.consider() }
+    // Retry when the connected backend meets this feature's fixed API requirement.
+    function onBackendCanSuggestEventsChanged() { root.consider() }
   }
   Connections {
     target: root.runner
@@ -83,7 +81,7 @@ Item {
   function consider() {
     var account = reading
     if (!account || !service || service.suggestEvents !== true || !service.hasAgent || unavailable
-        || service.backendNeedsUpdate) return false
+        || !service.backendCanSuggestEvents) return false
     var id = String(account.selectedId || "")
     var summary = account.selectedMessage
     if (id === "" || !summary || String(summary.id || "") !== id) return false

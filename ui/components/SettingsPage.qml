@@ -563,13 +563,12 @@ Column {
         textFormat: Text.PlainText
       }
 
-      // The unreleased step: the owner's backend cannot look yet. Said
-      // here, and the switch waits, rather than a switch that does nothing.
+      // Availability follows the connected backend's API, not release labels.
       Text {
         objectName: "suggestEventsNeedsUpdate"
         width: parent.width
-        visible: !!root.service && root.service.backendNeedsUpdate
-        text: "Needs a backend update: available after the next backend release."
+        visible: !!root.service && !root.service.backendCanSuggestEvents
+        text: "Install or update the backend to use this feature."
         color: root.accentColor
         font.family: root.panelFontFamily
         font.pixelSize: Style.font.caption
@@ -597,7 +596,7 @@ Column {
       anchors.rightMargin: Style.space(10)
       anchors.verticalCenter: parent.verticalCenter
       checked: !!root.service && root.service.suggestEvents === true
-      enabled: !!root.service && !root.service.backendNeedsUpdate
+      enabled: !!root.service && root.service.backendCanSuggestEvents
       opacity: enabled ? 1 : 0.5
       foreground: root.textColor
       accent: root.accentColor

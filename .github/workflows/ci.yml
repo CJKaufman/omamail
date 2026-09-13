@@ -126,9 +126,15 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           ARCH: ${{ matrix.arch }}
+          SOURCE_BRANCH: ${{ github.head_ref || github.ref_name }}
         run: |
           set -euo pipefail
           version="$(python3 scripts/package-backend.py pin-version)"
+          # A release PR cannot merge its version bump while publication is
+          # still building or has failed. The final pin commit reruns this gate.
+          case "$SOURCE_BRANCH" in
+            release/*) python3 scripts/package-backend.py check --require-pin ;;
+          esac
           # Missing bootstrap assets intentionally fail this required check.
           test "$(gh release view "v$version" --json isDraft --jq .isDraft)" = false
           mkdir published
@@ -161,7 +167,7 @@ jobs:
           - raise `apiVersion` to exactly `releasedApiVersion + 1`;
           - list every new method under `unreleased.methods` and every new or changed contract case under `unreleased.cases`;
           - leave the released cases as they are — the pinned binary has to keep passing them;
-          - a feature that needs the step reads `Service.backendNeedsUpdate` and waits while it is true.
+          - a feature that needs the step checks the connected backend against its fixed minimum API revision and waits until that requirement is met.
           If `apiVersion` is already a step ahead, the released view still changed: compare `backend-api.json` with the pinned release's copy (`gh release download v$(cat backend-version) --pattern backend-api.json`). See "Released and unreleased" in `docs/BACKEND-RUNTIME.md`.
           NOTE
       - uses: actions/upload-artifact@v4
