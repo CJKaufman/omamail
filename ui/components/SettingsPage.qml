@@ -522,6 +522,89 @@ Column {
     }
   }
 
+  // A look at every message opened, on the owner's behalf. Off until it is
+  // turned on, because the message text leaves the window for the system
+  // AI; the switch says in a word which way it stands.
+  Rectangle {
+    objectName: "settings-suggest-events"
+    width: parent.width
+    implicitHeight: Math.max(suggestText.implicitHeight, suggestSwitch.implicitHeight)
+      + Style.space(16)
+    radius: Style.cornerRadius
+    color: Style.normalFillFor(root.textColor, root.accentColor)
+
+    Column {
+      id: suggestText
+      anchors.left: parent.left
+      anchors.leftMargin: Style.space(12)
+      anchors.right: suggestState.left
+      anchors.rightMargin: Style.space(10)
+      anchors.verticalCenter: parent.verticalCenter
+      spacing: Style.space(2)
+
+      Text {
+        width: parent.width
+        text: "Suggest calendar events from mail"
+        color: root.textColor
+        font.family: root.panelFontFamily
+        font.pixelSize: Style.font.bodySmall
+        textFormat: Text.PlainText
+      }
+
+      Text {
+        width: parent.width
+        text: "Uses the system AI: a message from a person that names a time is "
+          + "sent to it once when opened, which spends tokens. Notifications, "
+          + "newsletters and lists are skipped. Nothing is written until you Add."
+        color: root.dimColor
+        font.family: root.panelFontFamily
+        font.pixelSize: Style.font.caption
+        wrapMode: Text.WordWrap
+        textFormat: Text.PlainText
+      }
+
+      // The unreleased step: the owner's backend cannot look yet. Said
+      // here, and the switch waits, rather than a switch that does nothing.
+      Text {
+        objectName: "suggestEventsNeedsUpdate"
+        width: parent.width
+        visible: !!root.service && root.service.backendNeedsUpdate
+        text: "Needs a backend update: available after the next backend release."
+        color: root.accentColor
+        font.family: root.panelFontFamily
+        font.pixelSize: Style.font.caption
+        wrapMode: Text.WordWrap
+        textFormat: Text.PlainText
+      }
+    }
+
+    Text {
+      id: suggestState
+      objectName: "suggestEventsState"
+      anchors.right: suggestSwitch.left
+      anchors.rightMargin: Style.space(8)
+      anchors.verticalCenter: parent.verticalCenter
+      text: suggestSwitch.checked ? "On" : "Off"
+      color: root.dimColor
+      font.family: root.panelFontFamily
+      font.pixelSize: Style.font.caption
+    }
+
+    ToggleSwitch {
+      id: suggestSwitch
+      objectName: "suggestEventsSwitch"
+      anchors.right: parent.right
+      anchors.rightMargin: Style.space(10)
+      anchors.verticalCenter: parent.verticalCenter
+      checked: !!root.service && root.service.suggestEvents === true
+      enabled: !!root.service && !root.service.backendNeedsUpdate
+      opacity: enabled ? 1 : 0.5
+      foreground: root.textColor
+      accent: root.accentColor
+      onToggled: if (root.service) root.service.setSuggestEvents(!root.service.suggestEvents)
+    }
+  }
+
   // -------------------------------------------------------- notifications
 
   Text {
