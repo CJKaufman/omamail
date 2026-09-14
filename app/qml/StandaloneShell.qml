@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Dialogs
+import qs.Commons
 
 QtObject {
   id: root
@@ -19,7 +20,11 @@ QtObject {
     tray: false,
     mailto: false,
     notifications: !!host && !!host.capabilities
-      && host.capabilities.notifications === true
+      && host.capabilities.notifications === true,
+    reopen: !!host && !!host.capabilities && host.capabilities.reopen === true,
+    // An installed Omarchy theme is the palette; the appearance setting only
+    // has something to decide where the fallback palettes are in use.
+    appearance: !Color.hasOmarchyTheme
   })
 
   property var fileCallback: null
@@ -41,10 +46,10 @@ QtObject {
   function hide(pluginId) {
     if (String(pluginId || "") !== String(manifest.id || "omamail")) return false
     if (app && typeof app.close === "function") app.close()
-    // With no tray and no actionable notification there is no background
-    // route back to a hidden window. End the process so a launcher invocation
-    // starts a reachable application again.
-    if (!capabilities.tray && !capabilities.notifications
+    // With no tray, no actionable notification and no Dock to click there is
+    // no route back to a hidden window. End the process so a launcher
+    // invocation starts a reachable application again.
+    if (!capabilities.tray && !capabilities.notifications && !capabilities.reopen
         && host && typeof host.quit === "function") host.quit()
     else if (host && typeof host.hide === "function") host.hide()
     return true

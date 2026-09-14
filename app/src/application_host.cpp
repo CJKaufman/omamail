@@ -41,11 +41,25 @@ ApplicationHost::ApplicationHost(
     m_capabilities = {
         {QStringLiteral("agent"), false},
         {QStringLiteral("systemTray"), false},
-        {QStringLiteral("notifications"), m_notifications->available()}};
+        {QStringLiteral("notifications"), m_notifications->available()},
+        // The Dock keeps a running application reachable after its window is
+        // shut; elsewhere a windowless process has no such door.
+#ifdef Q_OS_MACOS
+        {QStringLiteral("reopen"), true}};
+#else
+        {QStringLiteral("reopen"), false}};
+#endif
     connect(m_notifications.get(), &NotificationService::errorChanged, this,
             &ApplicationHost::notificationErrorChanged);
     connect(m_notifications.get(), &NotificationService::activated, this,
             &ApplicationHost::activateFromNotification);
+    // A window shut with the close chord leaves the process running for its
+    // notifications. Activating the application again with nothing on screen
+    // is the desktop's way of asking for the window back; on macOS Qt reports
+    // a Dock click as exactly that, even when the process was already active.
+    if (auto *application = qobject_cast<QGuiApplication *>(QCoreApplication::instance()))
+        connect(application, &QGuiApplication::applicationStateChanged, this,
+                &ApplicationHost::handleApplicationStateChanged);
     loadManifest(manifestPath);
     QVariantMap defaults = m_manifest.value(QStringLiteral("barWidget")).toMap()
                                .value(QStringLiteral("defaults")).toMap();
@@ -121,6 +135,14 @@ QVariantMap ApplicationHost::takePendingNotificationActivation()
         emit pendingNotificationActivationChanged();
     }
     return pending;
+}
+
+void ApplicationHost::handleApplicationStateChanged(Qt::ApplicationState state)
+{
+    if (state != Qt::ApplicationActive) return;
+    for (QWindow *window : QGuiApplication::topLevelWindows())
+        if (window->isVisible()) return;
+    emit reopenRequested();
 }
 
 void ApplicationHost::hide()
