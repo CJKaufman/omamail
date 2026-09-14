@@ -87,7 +87,7 @@ jobs:
           CARGO_BUILD_TARGET: ${{ matrix.target }}
           RUSTFLAGS: -C linker=musl-gcc
         run: |
-          cargo test --locked
+          cargo test --locked --features integration-test-credentials
           cargo build --release --locked
       - name: Verify native version and static linkage, then package
         env:
@@ -144,7 +144,7 @@ jobs:
           QT_QUICK_CONTROLS_FALLBACK_STYLE: Basic
         run: |
           set -euo pipefail
-          cargo test --locked --no-default-features --features standalone
+          cargo test --locked --no-default-features --features standalone,integration-test-credentials
           cargo build --release --locked --no-default-features --features standalone
           cmake -S app -B build/app -G Ninja -DCMAKE_BUILD_TYPE=Release -DOMAMAIL_BACKEND="$PWD/target/release/omamail"
           cmake --build build/app
@@ -224,7 +224,7 @@ jobs:
           QT_QUICK_CONTROLS_FALLBACK_STYLE: Basic
         run: |
           set -euo pipefail
-          cargo test --locked --no-default-features --features standalone
+          cargo test --locked --no-default-features --features standalone,integration-test-credentials
           cargo build --release --locked --no-default-features --features standalone
           cmake -S app -B build/app -G Ninja -DCMAKE_BUILD_TYPE=Release -DOMAMAIL_BACKEND="$PWD/target/release/omamail"
           cmake --build build/app
