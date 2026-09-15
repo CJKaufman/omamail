@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.21)
 
-project(omamail-app VERSION 0.10.3 LANGUAGES CXX)
+project(omamail-app VERSION 0.10.4 LANGUAGES CXX)
 
 if(WIN32)
   enable_language(RC)
