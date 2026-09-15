@@ -49,8 +49,12 @@ void SettingsTest::atomicSettingsRoundTrip()
     const QFileDevice::Permissions permissions = QFileInfo(path).permissions();
     QVERIFY(permissions.testFlag(QFileDevice::ReadOwner));
     QVERIFY(permissions.testFlag(QFileDevice::WriteOwner));
+#ifndef Q_OS_WIN
+    // NTFS has no group and other bits; Qt reports the file readable by both
+    // whatever the ACL says, so the private mode is a POSIX assertion.
     QVERIFY(!permissions.testFlag(QFileDevice::ReadGroup));
     QVERIFY(!permissions.testFlag(QFileDevice::ReadOther));
+#endif
 }
 
 void SettingsTest::invalidJsonIsPreserved()
@@ -211,10 +215,17 @@ void SettingsTest::watchSettlesAfterDirectoryMutation()
     QTest::qWait(300);
     changed.clear();
 
-    // The backend re-asserts private modes on every read, which touches only
-    // the ctime of the directory and of the file it opened.
+    // A sibling written is a directory event everywhere. The backend's own
+    // touch, re-asserting a private mode that already holds, moves only a
+    // ctime, which is nothing Windows reports.
+    QFile sibling(directory.filePath(QStringLiteral("accounts.json")));
+    QVERIFY(sibling.open(QIODevice::WriteOnly));
+    QCOMPARE(sibling.write("outside"), qint64(7));
+    sibling.close();
+#ifndef Q_OS_WIN
     QVERIFY(QFile::setPermissions(directory.path(), QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner));
     QVERIFY(QFile::setPermissions(present, QFileDevice::ReadOwner | QFileDevice::WriteOwner));
+#endif
     QTRY_VERIFY_WITH_TIMEOUT(!changed.isEmpty(), 2000);
     QTest::qWait(500);
     const int settled = changed.count();
