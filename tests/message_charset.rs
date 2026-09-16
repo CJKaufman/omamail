@@ -203,7 +203,9 @@ fn cached_reader_redecodes_original_octets_instead_of_reusing_mojibake() {
         os::unix::fs::PermissionsExt,
         process::{Command, Stdio},
     };
-    let root = std::env::temp_dir().join(format!(
+    // macOS puts TMPDIR under /var, a symlink the private_fs path walk
+    // refuses (O_NOFOLLOW), so resolve it first like the other CLI tests.
+    let root = std::env::temp_dir().canonicalize().unwrap().join(format!(
         "omamail-charset-cache-{}-{}",
         std::process::id(),
         std::time::SystemTime::now()
