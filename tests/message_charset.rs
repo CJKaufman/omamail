@@ -195,6 +195,18 @@ fn nested_mime_and_attachment_bytes_are_preserved() {
     );
 }
 
+// The registry lives where the platform contract puts it: macOS reads
+// ~/Library/Application Support and ignores XDG_CONFIG_HOME.
+#[cfg(target_os = "macos")]
+fn config_root(root: &std::path::Path) -> std::path::PathBuf {
+    root.join("Library/Application Support")
+}
+#[cfg(all(unix, not(target_os = "macos")))]
+fn config_root(root: &std::path::Path) -> std::path::PathBuf {
+    root.join("config")
+}
+
+#[cfg(unix)]
 #[test]
 fn cached_reader_redecodes_original_octets_instead_of_reusing_mojibake() {
     use std::{
@@ -203,7 +215,9 @@ fn cached_reader_redecodes_original_octets_instead_of_reusing_mojibake() {
         os::unix::fs::PermissionsExt,
         process::{Command, Stdio},
     };
-    let root = std::env::temp_dir().join(format!(
+    // macOS puts TMPDIR under /var, a symlink the private_fs path walk
+    // refuses (O_NOFOLLOW), so resolve it first like the other CLI tests.
+    let root = std::env::temp_dir().canonicalize().unwrap().join(format!(
         "omamail-charset-cache-{}-{}",
         std::process::id(),
         std::time::SystemTime::now()
@@ -220,9 +234,10 @@ fn cached_reader_redecodes_original_octets_instead_of_reusing_mojibake() {
         }
     }
     let _cleanup = Cleanup(root.clone());
-    let registry = root.join("config/omamail/accounts.json");
+    let config = config_root(&root);
+    let registry = config.join("omamail/accounts.json");
     fs::create_dir_all(registry.parent().unwrap()).unwrap();
-    fs::set_permissions(root.join("config"), fs::Permissions::from_mode(0o700)).unwrap();
+    fs::set_permissions(&config, fs::Permissions::from_mode(0o700)).unwrap();
     fs::set_permissions(
         registry.parent().unwrap(),
         fs::Permissions::from_mode(0o700),
