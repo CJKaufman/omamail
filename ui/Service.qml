@@ -1292,7 +1292,8 @@ Item {
     saveWindowPrefs()
     // The message on screen is the one the answer was given about, so it
     // answers now rather than at the next message.
-    if (next && current) current.showRemoteImages()
+    var host = reading || current
+    if (next && host) host.showRemoteImages()
   }
   signal duplicateAccount(string email)
 

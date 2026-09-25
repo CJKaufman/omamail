@@ -197,5 +197,18 @@ Item {
       compare(account.selectedDocument.children[0].text, "current image policy")
     }
 
+    function test_always_show_images_transition_rerenders_active_message() {
+      account.selectedId = "message-one"
+      account.renderSource("native-key")
+      compare(account.remoteImagesAllowed, false)
+      compare(backend.requests.length, 1)
+      compare(backend.requests[0].params.options.allowRemoteImages, false)
+      account.alwaysShowImages = true
+      compare(account.remoteImagesAllowed, true)
+      compare(backend.requests.length, 2)
+      compare(backend.requests[1].params.options.allowRemoteImages, true)
+      compare(backend.requests[1].params.readerKey, "native-key")
+    }
+
   }
 }

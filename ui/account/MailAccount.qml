@@ -220,6 +220,16 @@ Item {
   // message starts. Off, and every message begins blocked and is asked about
   // one at a time.
   property bool alwaysShowImages: false
+  onAlwaysShowImagesChanged: {
+    var allowed = Model.showsRemoteImages(alwaysShowImages, selectionIsPreview)
+    if (allowed !== remoteImagesAllowed) {
+      remoteImagesAllowed = allowed
+      if (allowed && readerSourceKey !== "") {
+        remoteImageData = ({})
+        renderSource(readerSourceKey)
+      }
+    }
+  }
   property bool remoteImagesAllowed: false
   property bool remoteImagesLoading: false
   property var remoteImageData: ({})
